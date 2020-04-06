@@ -1,18 +1,39 @@
 # ignore everything in the root except the "wp-content" directory.
+livechat/
+wp-admin/
+wp-includes/
+.htaccess
 !wp-content/
+
+# ignore vendor folders
+*/vendor/
 
 # ignore everything in the "wp-content" directory, except:
 # "mu-plugins", "plugins", "themes" directory
 wp-content/*
+wp-content/plugins/bullpen/vendor/
 !wp-content/mu-plugins/
 !wp-content/plugins/
 !wp-content/themes/
 
 # ignore these plugins
 wp-content/plugins/hello.php
+wp-content/plugins/call-now-button/
+wp-content/plugins/custom-post-type-maker/
+wp-content/plugins/customizer-export-import/
+wp-content/plugins/error-log-monitor/
+wp-content/plugins/header-footer/
+wp-content/plugins/mesmerize-companion/
+wp-content/plugins/rewrite-rules-inspector/
+wp-content/plugins/wp-change-default-from-email/
+wp-content/plugins/wp-ses/
+wp-content/plugins/wpforms-lite/
+wp-content/plugins/wpfront-scroll-top/
 
 # ignore specific themes
 wp-content/themes/twenty*/
+wp-content/themes/empowerwp-pro/
+wp-content/themes/mesmerize/
 
 # ignore node dependency directories
 node_modules/
@@ -21,3 +42,20 @@ node_modules/
 *.log
 *.sql
 *.sqlite
+.DS_Store
+.vscode/
+index.php
+index.php.construction
+wp-activate.php
+wp-blog-header.php
+wp-comments-post.php
+wp-config.php
+wp-cron.php
+wp-links-opml.php
+wp-load.php
+wp-login.php
+wp-mail.php
+wp-settings.php
+wp-signup.php
+wp-trackback.php
+xmlrpc.php

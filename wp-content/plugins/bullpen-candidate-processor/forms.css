@@ -1,0 +1,31 @@
+form.bullpen_application {
+	box-sizing: border-box;
+}
+
+div.fieldgroup {
+  padding-bottom: 2em;
+}
+
+form.bullpen_application label {
+	/* width: 100%; */
+	margin-bottom: 2em;
+	box-sizing: border-box;
+  display: none;
+}
+
+form.bullpen_application input {
+	width: 50%;
+	font-size: 20px;
+}
+
+form.bullpen_application input:not([type='submit']){
+	box-sizing: border-box;
+}
+
+form.bullpen_application label[for='resume'] {
+	font-size: 18px;
+} 
+form.bullpen_application label[for='resume'] p {
+	font-size: 16px;
+	font-style: italic;
+}
