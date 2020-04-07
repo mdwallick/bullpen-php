@@ -7,10 +7,10 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 
 if (!defined('ABSPATH'))
-	exit ;
+	exit;
 
 if (!class_exists('Bullhorn_Connection'))
-	exit ;
+	exit;
 
 if (!class_exists('Bullhorn_Extended_Connection')) :
 
@@ -20,7 +20,8 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 	 *
 	 * Class Bullhorn_Extended_Connection
 	 */
-	class Bullhorn_Extended_Connection extends Bullhorn_Connection {
+	class Bullhorn_Extended_Connection extends Bullhorn_Connection
+	{
 
 		public $logged_in;
 
@@ -31,31 +32,34 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 *
 		 * @return \Bullhorn_Extended_Connection
 		 */
-		public function __construct() {
+		public function __construct()
+		{
 			// Call parent __construct()
 			parent::__construct();
-			$this -> uploadsDirectory();
+			$this->uploadsDirectory();
 
 			// everytime we run this subclass, it'll need to log in.
-			$this -> extendedLogin();
+			$this->extendedLogin();
 		}
 
-		public function extendedLogin() {
-			$this -> logged_in = $this -> login();
+		public function extendedLogin()
+		{
+			$this->logged_in = $this->login();
 		}
 
 		// ultimately, this should move out of the subclass and into a initializer
-		protected function uploadsDirectory() {
+		protected function uploadsDirectory()
+		{
 			$wp_uploads = wp_upload_dir();
 			$uploads_dir = $wp_uploads['basedir'] . '/' . 'bullpen_uploads/resumes';
 
 			if (!is_dir($uploads_dir)) {
 				if (!wp_mkdir_p($uploads_dir)) {
-					$this -> throwJsonError(500, 'Unable to upload file to directory. Directory not accessable');
+					$this->throwJsonError(500, 'Unable to upload file to directory. Directory not accessable');
 					exit();
 				}
 			}
-			$this -> uploads_dir = $uploads_dir;
+			$this->uploads_dir = $uploads_dir;
 			return true;
 		}
 
@@ -64,10 +68,11 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 *
 		 * @return mixed
 		 */
-		public function storeResumeFile() {
+		public function storeResumeFile()
+		{
 			// check to make sure file was posted
 			if (!isset($_FILES['resume'])) {
-				$this -> throwJsonError(500, 'No resume file found.');
+				$this->throwJsonError(500, 'No resume file found.');
 				exit();
 			}
 
@@ -92,28 +97,29 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 *
 		 * @return mixed
 		 */
-		public function getApplicationData() {
+		public function getApplicationData()
+		{
 			$fields = array('firstName', 'lastName', 'email2', 'phone', 'source');
 			$data = new stdClass();
 
 			foreach ($fields as $key) {
-				if ( isset( $_POST[$key] ) ) {
-					$data -> {$key} = $_POST[$key];
+				if (isset($_POST[$key])) {
+					$data->{$key} = $_POST[$key];
 				}
 			}
-			
-			if ( isset( $_POST['owner'] ) ) {
+
+			if (isset($_POST['owner'])) {
 				// add the owner field
-				$data -> owner = new stdClass();
-				$data -> owner -> id = $_POST['owner'];
+				$data->owner = new stdClass();
+				$data->owner->id = $_POST['owner'];
 			}
 
-			if ($data -> phone) {
-				$data -> mobile = $data -> phone;
+			if ($data->phone) {
+				$data->mobile = $data->phone;
 			}
 
-			if ($data -> firstName && $data -> lastName) {
-				$data -> name = $data -> firstName . ' ' . $data -> lastName;
+			if ($data->firstName && $data->lastName) {
+				$data->name = $data->firstName . ' ' . $data->lastName;
 			}
 
 			$address_fields = array('address1', 'address2', 'city', 'state', 'zip');
@@ -121,15 +127,13 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 
 			foreach ($address_fields as $key) {
 				if (isset($_POST[$key])) {
-					$address_data -> {$key} = $_POST[$key];
+					$address_data->{$key} = $_POST[$key];
 				}
 			}
 
-			$data -> address = $address_data;
-			//$data->source = 'Website Application';
-
+			$data->address = $address_data;
 			$candidate = new stdClass();
-			$candidate -> candidate = $data;
+			$candidate->candidate = $data;
 			return $candidate;
 		}
 
@@ -138,9 +142,10 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 *
 		 * @return mixed
 		 */
-		public function parseResume($file) {
+		public function parseResume($file)
+		{
 			if (!$file) {
-				$this -> throwJsonError(500, 'Requires a resume file.');
+				$this->throwJsonError(500, 'Requires a resume file.');
 				exit();
 			}
 
@@ -148,83 +153,74 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 			$ext = pathinfo($file, PATHINFO_EXTENSION);
 
 			switch (strtolower($ext)) {
-				case 'txt' :
+				case 'txt':
 					$format = 'TEXT';
 					break;
-				case 'doc' :
+				case 'doc':
 					$format = 'DOC';
 					break;
-				case 'docx' :
+				case 'docx':
 					$format = 'DOCX';
 					break;
-				case 'pdf' :
+				case 'pdf':
 					$format = 'PDF';
 					break;
-				case 'rtf' :
+				case 'rtf':
 					$format = 'RTF';
 					break;
-				case 'html' :
+				case 'html':
 					$format = 'HTML';
 					break;
-				case 'htm' :
+				case 'htm':
 					$format = 'HTML';
 					break;
-				default :
-					$this -> throwJsonError(500, 'File format error. (txt, html, pdf, doc, docx, rtf)');
+				default:
+					$this->throwJsonError(500, 'File format error. (txt, html, pdf, doc, docx, rtf)');
 			}
 
-			$url = $this -> url . 'resume/parseToCandidate';
-			//$params = array('BhRestToken' => $this -> session, 'format' => $format, 'populateDescription' => 'html');
-			$params = array('BhRestToken' => $this -> session, 'format' => $format, 'populateDescription' => 'text');
+			$url = $this->url . 'resume/parseToCandidate';
+			$params = array('BhRestToken' => $this->session, 'format' => $format, 'populateDescription' => 'text');
 
 			try {
 				$client = new Client();
 				$url = $url . '?' . http_build_query($params);
-				$response = $client -> post($url, [
+				$response = $client->post($url, [
 					'multipart' => [
 						[
-						'name'     => 'resume',
-						'contents' => fopen($file, 'r')
+							'name'     => 'resume',
+							'contents' => fopen($file, 'r')
 						]
 					]
 				]);
-					
-				//error_log ( 'Posting to ' . $url . '?' . http_build_query($params));
-				//$request = $client -> createRequest('POST', $url . '?' . http_build_query($params));
-				//$postBody = $request -> getBody();
-				//$file_handler = fopen($file, 'r');
-				//$postBody -> addFile(new PostFile('resume', $file_handler));
-				//$request = $client -> request('POST', $url . '?' . http_build_query($params), ['body' => $file_handler ]);
-				//$response = $client -> send($request);
-				//fclose($file_handler);
-				return json_decode($response -> getBody());
-			} catch ( GuzzleHttp\Exception\ClientException $e ) {
+				return json_decode($response->getBody());
+			} catch (GuzzleHttp\Exception\ClientException $e) {
 				//$error = json_decode($e -> getResponse() -> getBody());
 				return false;
 				// $this->throwJsonError(500, $error->errorMessage);
-			} catch ( GuzzleHttp\Exception\ServerException $e ) {
+			} catch (GuzzleHttp\Exception\ServerException $e) {
 				return false;
 				// $this->throwJsonError(500, $error);
-			} catch ( GuzzleHttp\Exception\ConnectException $e ) {
-				$error = $e -> getMessage();
-				error_log ( $error );
+			} catch (GuzzleHttp\Exception\ConnectException $e) {
+				$error = $e->getMessage();
+				error_log($error);
 				return false;
 				// $this->throwJsonError(500, $error);
-			} catch ( Exception $e ) {
-				$error = $e -> getMessage();
-				error_log ( $error );
+			} catch (Exception $e) {
+				$error = $e->getMessage();
+				error_log($error);
 				return false;
 				// $this->throwJsonError(404, 'Oh damn');
 			}
 		}
 
-		public function mergeFormAndResume($resume, $application) {
+		public function mergeFormAndResume($resume, $application)
+		{
 			// HACK: there has to be a better way to do this
 			// save the description field (the HTML resume) and add it back in
 			// after the two arrays are merged
-			$description = $resume -> candidate -> description;
-			$merged = (object) array_merge((array)$resume, (array)$application);
-			$merged -> candidate -> description = $description;
+			$description = $resume->candidate->description;
+			$merged = (object) array_merge((array) $resume, (array) $application);
+			$merged->candidate->description = $description;
 			return $merged;
 		}
 
@@ -235,27 +231,28 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 * @param $email
 		 * @return integer - the candidate's ID, if found, else zero
 		 */
-		private function getCandidate($email) {
+		private function getCandidate($email)
+		{
 			// Create the url && variables array
-			$url = $this -> url . 'search/Candidate';
+			$url = $this->url . 'search/Candidate';
 			$query = '(email:"' . $email . '" OR email2:"' . $email . '") AND isDeleted:0';
-			$params = array('BhRestToken' => $this -> session, 'fields' => 'id,email,email2', 'query' => $query);
+			$params = array('BhRestToken' => $this->session, 'fields' => 'id,email,email2', 'query' => $query);
 
 			try {
 				$client = new Client();
-				$response = $client -> get($url . '?' . http_build_query($params));
-				$candidates = json_decode($response -> getBody());
-				$data = $candidates -> data;
+				$response = $client->get($url . '?' . http_build_query($params));
+				$candidates = json_decode($response->getBody());
+				$data = $candidates->data;
 				if (count($data) > 0) {
 					$candidate = $data[0];
 					return $candidate;
 				}
 				return 0;
-			} catch ( ClientException $e ) {
-				$error = json_decode($e -> getResponse() -> getBody());
+			} catch (ClientException $e) {
+				$error = json_decode($e->getResponse()->getBody());
 				//$this->throwJsonError(500, $error->errorMessage);
 				return 0;
-			} catch ( ServerException $e ) {
+			} catch (ServerException $e) {
 				return 0;
 			}
 		}
@@ -266,74 +263,76 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 * @param $resume
 		 * @return mixed
 		 */
-		public function createCandidate($resume) {
+		public function createCandidate($resume)
+		{
 			// Make sure country ID is correct
-			if (is_null($resume -> candidate -> address)) {
-				$resume -> candidate -> address = new stdClass();
+			if (is_null($resume->candidate->address)) {
+				$resume->candidate->address = new stdClass();
 			}
 
-			if (!property_exists($resume -> candidate -> address, 'countryID')) {
-				$resume -> candidate -> address -> countryID = null;
+			if (!property_exists($resume->candidate->address, 'countryID')) {
+				$resume->candidate->address->countryID = null;
 			}
 
-			if (is_null($resume -> candidate -> address -> countryID)) {
-				$resume -> candidate -> address -> countryID = 1;
+			if (is_null($resume->candidate->address->countryID)) {
+				$resume->candidate->address->countryID = 1;
 			}
 
 			// see if there's already a candidate, so we can update
 			// rather than create a duplicate
-			$candidate = $this -> getCandidate($resume -> candidate -> email2);
+			$candidate = $this->getCandidate($resume->candidate->email2);
 			if ($candidate) {
-				$candidate_id = $candidate -> id;
+				$candidate_id = $candidate->id;
 			} else {
 				$candidate_id = 0;
 			}
-			
-			$candidate_data = json_encode($resume -> candidate);
+
+			$candidate_data = json_encode($resume->candidate);
 
 			// Create the url && variables array
-			$url = $this -> url . 'entity/Candidate';
-			$params = array('BhRestToken' => $this -> session);
+			$url = $this->url . 'entity/Candidate';
+			$params = array('BhRestToken' => $this->session);
 			try {
 				$client = new Client();
 				if ($candidate_id) {
 					// update, don't create
 					$url .= '/' . $candidate_id;
-					$response = $client -> post($url . '?' . http_build_query($params), array('body' => $candidate_data));
+					$response = $client->post($url . '?' . http_build_query($params), array('body' => $candidate_data));
 				} else {
 					// create a new candidate
-					$response = $client -> put($url . '?' . http_build_query($params), array('body' => $candidate_data));
+					$response = $client->put($url . '?' . http_build_query($params), array('body' => $candidate_data));
 				}
-				return json_decode($response -> getBody());
-			} catch ( ClientException $e ) {
-				$error = json_decode($e -> getResponse() -> getBody());
+				return json_decode($response->getBody());
+			} catch (ClientException $e) {
+				$error = json_decode($e->getResponse()->getBody());
 				// $this->throwJsonError(500, $error->errorMessage);
 				return false;
-			} catch ( ServerException $e ) {
+			} catch (ServerException $e) {
 				return false;
 			}
 		}
 
-		public function createCandidateFromForm($application) {
-			$application = (object)$application;
-			$application -> candidate = (object)$application -> candidate;
+		public function createCandidateFromForm($application)
+		{
+			$application = (object) $application;
+			$application->candidate = (object) $application->candidate;
 
 			// Make sure country ID is correct
-			if (is_null($application -> candidate -> address)) {
-				$application -> candidate -> address = new stdClass();
-				if (is_null($application -> candidate -> address -> countryID)) {
-					$application -> candidate -> address = (object)$application -> candidate -> address;
-					$application -> candidate -> address -> countryID = 1;
+			if (is_null($application->candidate->address)) {
+				$application->candidate->address = new stdClass();
+				if (is_null($application->candidate->address->countryID)) {
+					$application->candidate->address = (object) $application->candidate->address;
+					$application->candidate->address->countryID = 1;
 				}
 			}
-			$candidate_data = json_encode($application -> candidate);
+			$candidate_data = json_encode($application->candidate);
 
 			// Create the url && variables array
-			$url = $this -> url . 'entity/Candidate';
-			$params = array('BhRestToken' => $this -> session);
-			$candidate = $this -> getCandidate($application -> candidate -> email2);
+			$url = $this->url . 'entity/Candidate';
+			$params = array('BhRestToken' => $this->session);
+			$candidate = $this->getCandidate($application->candidate->email2);
 			if ($candidate) {
-				$candidate_id = $candidate -> id;
+				$candidate_id = $candidate->id;
 			} else {
 				$candidate_id = 0;
 			}
@@ -343,22 +342,22 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 				if ($candidate_id) {
 					// update, don't create
 					$url .= '/' . $candidate_id;
-					$response = $client -> post($url . '?' . http_build_query($params), array('body' => $candidate_data));
+					$response = $client->post($url . '?' . http_build_query($params), array('body' => $candidate_data));
 				} else {
 					// create a new candidate
-					$response = $client -> put($url . '?' . http_build_query($params), array('body' => $candidate_data));
+					$response = $client->put($url . '?' . http_build_query($params), array('body' => $candidate_data));
 				}
-				return json_decode($response -> getBody());
-			} catch ( ClientException $e ) {
-				$error = json_decode($e -> getResponse() -> getBody());
-				error_log( $error );
+				return json_decode($response->getBody());
+			} catch (ClientException $e) {
+				$error = json_decode($e->getResponse()->getBody());
+				error_log($error);
 				// $this->throwJsonError(500, $error->errorMessage);
 				return false;
-			} catch ( ServerException $e ) {
+			} catch (ServerException $e) {
 				return false;
-			} catch ( GuzzleHttp\Ring\Exception\ConnectException $e ) {
-				$error = $e -> getMessage();
-				error_log( $error );
+			} catch (GuzzleHttp\Ring\Exception\ConnectException $e) {
+				$error = $e->getMessage();
+				error_log($error);
 				return false;
 			}
 		}
@@ -370,33 +369,34 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 * @param $candidate
 		 * @return mixed
 		 */
-		public function attachEducation($resume, $candidate) {
+		public function attachEducation($resume, $candidate)
+		{
 
 			// Create the url && variables array
-			$url = $this -> url . 'entity/CandidateEducation';
-			$params = array('BhRestToken' => $this -> session);
+			$url = $this->url . 'entity/CandidateEducation';
+			$params = array('BhRestToken' => $this->session);
 
 			$responses = array();
 
 			if (property_exists($resume, 'candidateEducation')) {
 				foreach ($resume->candidateEducation as $edu) {
-					$edu -> candidate = new stdClass;
-					$edu -> candidate -> id = $candidate -> changedEntityId;
-					if (!is_int($edu -> gpa) || !is_float($edu -> gpa)) {
-						unset($edu -> gpa);
+					$edu->candidate = new stdClass;
+					$edu->candidate->id = $candidate->changedEntityId;
+					if (!is_int($edu->gpa) || !is_float($edu->gpa)) {
+						unset($edu->gpa);
 					}
 
 					$edu_data = json_encode($edu);
 
 					try {
 						$client = new Client();
-						$response = $client -> put($url . '?' . http_build_query($params), array('body' => $edu_data));
-						$responses[] = $response -> getBody();
+						$response = $client->put($url . '?' . http_build_query($params), array('body' => $edu_data));
+						$responses[] = $response->getBody();
 					} catch (ClientException $e) {
-						$error = json_decode($e -> getResponse() -> getBody());
+						$error = json_decode($e->getResponse()->getBody());
 						// $this->throwJsonError(500, $error->errorMessage);
 						return false;
-					} catch ( ServerException $e ) {
+					} catch (ServerException $e) {
 						return false;
 					}
 				}
@@ -411,35 +411,36 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 * @param $candidate
 		 * @return mixed
 		 */
-		public function attachWorkHistory($resume, $candidate) {
+		public function attachWorkHistory($resume, $candidate)
+		{
 			// don't bother if there is no work history to process
 			if (!property_exists($resume, 'candidateWorkHistory')) {
 				return false;
 			}
 
 			// Create the url && variables array
-			$url = $this -> url . 'entity/CandidateWorkHistory';
-			$params = array('BhRestToken' => $this -> session);
+			$url = $this->url . 'entity/CandidateWorkHistory';
+			$params = array('BhRestToken' => $this->session);
 
 			$responses = array();
 
 			if (property_exists($resume, 'candidateWorkHistory')) {
 				foreach ($resume->candidateWorkHistory as $job) {
-					$job -> candidate = new stdClass;
-					$job -> candidate -> id = $candidate -> changedEntityId;
+					$job->candidate = new stdClass;
+					$job->candidate->id = $candidate->changedEntityId;
 
 					$job_data = json_encode($job);
 
 					try {
 						$client = new Client();
-						$response = $client -> put($url . '?' . http_build_query($params), array('body' => $job_data));
+						$response = $client->put($url . '?' . http_build_query($params), array('body' => $job_data));
 
-						$responses[] = $response -> getBody();
+						$responses[] = $response->getBody();
 					} catch (ClientException $e) {
-						$error = json_decode($e -> getResponse() -> getBody());
+						$error = json_decode($e->getResponse()->getBody());
 						// $this->throwJsonError(500, $error->errorMessage);
 						return false;
-					} catch ( ServerException $e ) {
+					} catch (ServerException $e) {
 						return false;
 					}
 				}
@@ -454,69 +455,69 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 * @param $file
 		 * @return mixed
 		 */
-		public function attachResume($candidate, $file) {
+		public function attachResume($candidate, $file)
+		{
 			if (!$file) {
 				return false;
 			}
 
 			// Create the url && variables array
-			$url = $this -> url . '/file/Candidate/' . $candidate -> changedEntityId . '/raw';
-			$params = array('BhRestToken' => $this -> session, 'externalID' => 'Portfolio', 'fileType' => 'SAMPLE');
+			$url = $this->url . '/file/Candidate/' . $candidate->changedEntityId . '/raw';
+			$params = array('BhRestToken' => $this->session, 'externalID' => 'Portfolio', 'fileType' => 'SAMPLE');
 
 			try {
 				$client = new Client();
-				$response = $client -> put($url, [
-                                        'multipart' => [
-                                                [
-                                                'name'     => 'resume',
-                                                'contents' => fopen($file, 'r')
-                                                ]
-                                        ]
-                                ]);
-				//$file_handler = fopen($file, 'r');
-				//$response = $client -> put($url . '?' . http_build_query($params), array('body' => array('resume' => $file_handler)));
-				// fclose($file_handler);
-				return json_decode($response -> getBody());
+				$response = $client->put($url, [
+					'multipart' => [
+						[
+							'name'     => 'resume',
+							'contents' => fopen($file, 'r')
+						]
+					]
+				]);
+				return json_decode($response->getBody());
 			} catch (ClientException $e) {
-				$error = json_decode($e -> getResponse() -> getBody());
+				$error = json_decode($e->getResponse()->getBody());
 				// $this->throwJsonError(500, $error->errorMessage);
 				return false;
-			} catch ( ServerException $e ) {
+			} catch (ServerException $e) {
 				return false;
 			}
 		}
 
-		public function attachToJob($candidate) {
+		public function attachToJob($candidate)
+		{
 			if (!isset($_POST['job'])) {
 				return;
 			}
 			$job_id = $_POST['job'];
 
 			// Create the url && variables array
-			$url = $this -> url . 'entity/JobSubmission';
-			$params = array('BhRestToken' => $this -> session);
+			$url = $this->url . 'entity/JobSubmission';
+			$params = array('BhRestToken' => $this->session);
 
-			$body = array('candidate' => array('id' => (int)$candidate -> changedEntityId), 'jobOrder' => array('id' => (int)$job_id), 'status' => 'New Lead', 'dateWebResponse' => (int)(microtime(true) * 1000));
+			$body = array('candidate' => array('id' => (int) $candidate->changedEntityId), 'jobOrder' => array('id' => (int) $job_id), 'status' => 'New Lead', 'dateWebResponse' => (int) (microtime(true) * 1000));
 
 			try {
 				$client = new Client();
-				$response = $client -> put($url . '?' . http_build_query($params), array('json' => $body));
-				return json_decode($response -> getBody());
-			} catch ( ClientException $e ) {
-				$error = json_decode($e -> getResponse() -> getBody());
+				$response = $client->put($url . '?' . http_build_query($params), array('json' => $body));
+				return json_decode($response->getBody());
+			} catch (ClientException $e) {
+				$error = json_decode($e->getResponse()->getBody());
 				return false;
 				// $this->throwJsonError(500, $error->errorMessage);
-			} catch ( ServerException $e ) {
+			} catch (ServerException $e) {
 				return false;
 			}
 		}
 
-		public function emailAssignee($candidate, $resume_file) {
-			$candidate = $candidate -> candidate;
-			$candidate_name = $candidate -> firstName . " " . $candidate -> lastName;
-			$candidate_email = $candidate -> email2;
-			$candidate_phone = $candidate -> phone;
-			$candidate_source = $candidate -> source;
+		public function emailAssignee($candidate, $resume_file)
+		{
+			$candidate = $candidate->candidate;
+			$candidate_name = $candidate->firstName . " " . $candidate->lastName;
+			$candidate_email = $candidate->email2;
+			$candidate_phone = $candidate->phone;
+			$candidate_source = $candidate->source;
 			$attachment = array($resume_file);
 
 			if (!isset($_POST['job'])) {
@@ -527,7 +528,7 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 				$message .= "\n\nName: " . $candidate_name;
 				$message .= "\nEmail: " . $candidate_email;
 				$message .= "\nPhone number: " . $candidate_phone;
-				$this -> sendEmail($email_to, $subject, $message, $attachment);
+				$this->sendEmail($email_to, $subject, $message, $attachment);
 				return;
 			}
 
@@ -539,9 +540,9 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 			// default to David in case the assignee field is empty
 			$email_to = 'david@advantagetech.net';
 			$the_query = new WP_Query($args);
-			if ($the_query -> have_posts()) {
-				while ($the_query -> have_posts()) {
-					$the_query -> the_post();
+			if ($the_query->have_posts()) {
+				while ($the_query->have_posts()) {
+					$the_query->the_post();
 					$post_id = get_the_ID();
 					$job_title = get_the_title();
 					$job_id = get_post_meta($post_id, 'bullhorn_job_id', true);
@@ -552,14 +553,15 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 					$message .= "\nEmail: " . $candidate_email;
 					$message .= "\nPhone number: " . $candidate_phone;
 					$message .= "\nSource: " . $candidate_source;
-					$this -> sendEmail($email_to, $subject, $message, $attachment);
+					$this->sendEmail($email_to, $subject, $message, $attachment);
 				}
 			} else {
 				error_log('No posts found for job ID ' . $job_id);
 			}
 		}
 
-		private function sendEmail($to, $subject, $message, $attachments = array()) {
+		private function sendEmail($to, $subject, $message, $attachments = array())
+		{
 			// same headers no matter who's getting emailed
 			$headers = "From: Advantage Tech Website Submission <webmaster@advantagetech.net>\r\n";
 			$headers .= "Reply-To: webmaster@advantagetech.net\r\n";
@@ -569,7 +571,8 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 			wp_mail($to, $subject, $message, $headers, $attachments);
 		}
 
-		public function deleteResumeFile($file) {
+		public function deleteResumeFile($file)
+		{
 			if (!$file) {
 				return false;
 			}
@@ -588,10 +591,11 @@ if (!class_exists('Bullhorn_Extended_Connection')) :
 		 * @param $status
 		 * @param $error
 		 */
-		private function throwJsonError($status, $error) {
+		private function throwJsonError($status, $error)
+		{
 			$response = array('status' => $status, 'error' => $error);
 			echo json_encode($response);
-			exit ;
+			exit;
 		}
 	}
 endif;

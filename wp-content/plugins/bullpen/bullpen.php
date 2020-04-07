@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bullpen Jobs Board Plugin
  *
@@ -17,32 +18,34 @@
  */
 
 // If this file is called directly, abort.
-if ( !defined('ABSPATH') ) exit;
+if (!defined('ABSPATH')) exit;
 
 /**
  * Plugin Activation Setup
  */
-function activate_bullpen_plugin() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-bullpen-activator.php';
+function activate_bullpen_plugin()
+{
+	require_once plugin_dir_path(__FILE__) . 'includes/class-bullpen-activator.php';
 	Bullpen_Activator::activate();
 }
-register_activation_hook( __FILE__, 'activate_bullpen_plugin' );
+register_activation_hook(__FILE__, 'activate_bullpen_plugin');
 
 /**
  * Plugin Deactivation Setup
  */
-function deactivate_bullpen_plugin() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-bullpen-deactivator.php';
+function deactivate_bullpen_plugin()
+{
+	require_once plugin_dir_path(__FILE__) . 'includes/class-bullpen-deactivator.php';
 	Bullpen_Deactivator::deactivate();
 }
-register_activation_hook( __FILE__, 'deactivate_bullpen_plugin' );
+register_activation_hook(__FILE__, 'deactivate_bullpen_plugin');
 
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-bullpen.php';
+require plugin_dir_path(__FILE__) . 'includes/class-bullpen.php';
 
 /**
  * Begins execution of the plugin.
@@ -53,7 +56,8 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-bullpen.php';
  *
  * @since    2.0.0
  */
-function run_bullpen() {
+function run_bullpen()
+{
 	$bullpen = new Bullpen();
 	$bullpen->instance();
 }

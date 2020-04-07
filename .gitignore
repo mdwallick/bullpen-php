@@ -2,6 +2,7 @@
 livechat/
 wp-admin/
 wp-includes/
+wp-snapshots/
 .htaccess
 !wp-content/
 
